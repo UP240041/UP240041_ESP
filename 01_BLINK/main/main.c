@@ -2,9 +2,34 @@
 #include "freertos/FreeRTOS.h" // Esta librería es necesaria para usar FreeRTOS 
 #include "freertos/task.h" // Esta librería es necesaria para usar las tareas de FreeRTOS
 
+#define LED GPIO_NUM_26 // Definimos el pin donde está conectado el LED
 
-#define LED GPIO_NUM_27 // Definimos el pin donde está conectado el LED
-//test
+void punto(){
+    gpio_set_level(LED, 1); // Encendemos el LED
+    vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
+    gpio_set_level(LED, 0); // Apagamos el LED
+    vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
+}
+
+void raya(){
+    gpio_set_level(LED, 1); // Encendemos el LED
+    vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
+    gpio_set_level(LED, 0); // Apagamos el LED
+    vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
+}
+
+void sos(){
+    for(int i =0; i < 3; i++){
+        punto();
+    }
+    for (int i = 0; i < 3; i++){
+        raya();
+    }
+     for(int i =0; i < 3; i++){
+        punto();
+    }
+}
+
 void app_main(void) // Función principal del programa
 {
 
@@ -13,44 +38,7 @@ void app_main(void) // Función principal del programa
 
     while (1) // Bucle infinito
     {
-        //S
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(1000)); // Esperamos 1 segundo
-        //O
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(1000)); // Esperamos 1 segundo
-        //S
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 1); // Encendemos el LED
-        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-        gpio_set_level(LED, 0); // Apagamos el LED
-        vTaskDelay(pdMS_TO_TICKS(1000)); // Esperamos 1 segundo
+        sos();
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
