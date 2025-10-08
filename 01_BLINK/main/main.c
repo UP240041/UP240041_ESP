@@ -42,3 +42,12 @@ void app_main(void) // Función principal del programa
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
+
+//Calculos de corriente y voltaje para el led externo
+//V.ent=5v
+//V.led=3v
+//i=15mA
+//Vr=V.ent-V.led=2v
+//R=2v/15mA
+//R=133.333ohms
+
