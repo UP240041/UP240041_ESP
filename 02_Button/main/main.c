@@ -26,7 +26,10 @@ void raya(){
     vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
 }
 
-void sos(){
+void sos()
+    {
+    while(true )
+    {
     for(int i =0; i < 3; i++){
         punto();
     }
@@ -35,6 +38,7 @@ void sos(){
     }
      for(int i =0; i < 3; i++){
         punto();
+    }
     }
 }
 
@@ -46,6 +50,7 @@ void sos(){
 //Vr=V.ent-V.led=2v
 //R=2v/15mA
 //R=133.333ohms
+
 
 
 
@@ -64,24 +69,29 @@ void app_main(void)
     gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
 
     // Bucle principal
-    while(true)
+   while(true)
     {
-        // Lee el estado del botón (0 si está presionado, 1 si no)
-        int status = gpio_get_level(BUTTON );
-
-        // Si el botón está presionado (nivel bajo)
-        if(status == false)
+    int status = gpio_get_level(BUTTON );
+    if (status == false)
         {
+        vTaskDelay(pdMS_TO_TICKS(25));
+        //0
+        if (status == false)
+        vTaskDelay(pdMS_TO_TICKS(100));
+            {
+                if (status == false)
+            {
+                vTaskDelay(pdMS_TO_TICKS(25));
+                //00
+                if (status == false)
+                {
+                    gpio_set_level(LED, 0); // Apaga el LED
+                }
+            }
             sos();
-        }
-        else
-        {
-            gpio_set_level(LED, 0); // Apaga el LED
-        }
-
+            }
         // Espera 20 ms antes de repetir
         vTaskDelay(pdMS_TO_TICKS(20)) ;
+        }
     }
-
 }
-
