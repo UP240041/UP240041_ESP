@@ -1,97 +1,101 @@
 #include <stdio.h>
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
-// Definición de los pines para el LED y el botón
-#define LED    GPIO_NUM_26
+#define LED GPIO_NUM_27
 #define BUTTON GPIO_NUM_5
 
-#include "driver/gpio.h" // Esta librería es necesaria para manejar los pines GPIO, en el CMake debemos agregar la dependencia "driver"
-#include "freertos/FreeRTOS.h" // Esta librería es necesaria para usar FreeRTOS 
-#include "freertos/task.h" // Esta librería es necesaria para usar las tareas de FreeRTOS
-
-#define LED GPIO_NUM_26 // Definimos el pin donde está conectado el LED
-
-void punto(){
-    gpio_set_level(LED, 1); // Encendemos el LED
-    vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
-    gpio_set_level(LED, 0); // Apagamos el LED
-    vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
+void punto()
+{
+    gpio_set_level(LED, 1);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    gpio_set_level(LED, 0);
+    vTaskDelay(pdMS_TO_TICKS(200));
 }
 
-void raya(){
-    gpio_set_level(LED, 1); // Encendemos el LED
-    vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
-    gpio_set_level(LED, 0); // Apagamos el LED
-    vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
+void raya()
+{
+    gpio_set_level(LED, 1);
+    vTaskDelay(pdMS_TO_TICKS(500));
+    gpio_set_level(LED, 0);
+    vTaskDelay(pdMS_TO_TICKS(500));
 }
 
 void sos()
-    {
-    while(true )
-    {
-    for(int i =0; i < 3; i++){
+{
+    for(int i = 0; i < 3; i++) {
         punto();
     }
-    for (int i = 0; i < 3; i++){
+    for (int i = 0; i < 3; i++) {
         raya();
     }
-     for(int i =0; i < 3; i++){
+    for(int i = 0; i < 3; i++) {
         punto();
     }
-    }
 }
-
-
-//Calculos de corriente y voltaje para el led externo
-//V.ent=5v
-//V.led=3v
-//i=15mA
-//Vr=V.ent-V.led=2v
-//R=2v/15mA
-//R=133.333ohms
-
-
 
 
 void app_main(void)
 {
-    // Reinicia la configuración de los pines LED y botón
     gpio_reset_pin(LED);
     gpio_reset_pin(BUTTON);
 
-    // Configura el pin del LED como salida
     gpio_set_direction(LED, GPIO_MODE_OUTPUT);
 
-    // Configura el pin del botón con resistencia pull-up
-    gpio_set_pull_mode(BUTTON, GPIO_PULLUP_ONLY);
-    // Configura el pin del botón como entrada
     gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(BUTTON, GPIO_PULLUP_ONLY);
 
-    // Bucle principal
-   while(true)
+    bool status = gpio_get_level(BUTTON);
+    bool led = false;
+
+    while(true)
     {
-    int status = gpio_get_level(BUTTON );
-    if (status == false)
+        if(gpio_get_level(BUTTON) == false)
         {
-        vTaskDelay(pdMS_TO_TICKS(25));
-        //0
-        if (status == false)
-        vTaskDelay(pdMS_TO_TICKS(100));
+            vTaskDelay(pdMS_TO_TICKS(50));
+
+            if (gpio_get_level(BUTTON) == false)
             {
-                if (status == false)
-            {
-                vTaskDelay(pdMS_TO_TICKS(25));
-                //00
-                if (status == false)
+                while(gpio_get_level(BUTTON) == false)
                 {
-                    gpio_set_level(LED, 0); // Apaga el LED
+                    vTaskDelay(pdMS_TO_TICKS(10));
                 }
+
+                bool status2 = false;
+
+                for(int i = 0 ; i < 40; i++)
+                {
+                    if(gpio_get_level(BUTTON) == false)
+                    {
+                        status2 = true; 
+                        break;
+                    }
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                }
+                
+                if(status2 == true)
+                {
+                   if(led == true)
+                   {
+                       led = false;
+                   }
+
+                   while(gpio_get_level(BUTTON) == false) 
+                   { 
+                    vTaskDelay(pdMS_TO_TICKS(10)); 
+                   }
+                }
+                else 
+                {
+                  if(led == false) 
+                  {
+                      led = true; 
+                  }
+                }
+                gpio_set_level(LED, led);
             }
-            sos();
-            }
-        // Espera 20 ms antes de repetir
-        vTaskDelay(pdMS_TO_TICKS(20)) ;
         }
+        vTaskDelay(pdMS_TO_TICKS(10)); 
     }
 }
