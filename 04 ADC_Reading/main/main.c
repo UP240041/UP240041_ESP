@@ -6,7 +6,8 @@
 
 int adc_value = 0; // Variable para almacenar el valor leído del ADC
 adc_oneshot_unit_handle_t adc1_handle; // Manejador para la unidad ADC1
-int adc_raw = 0; // Variable para almacenar el valor crudo del ADC
+int adc_raw_1 = 0; // Variable para almacenar el valor crudo del ADC
+int adc_raw_3 = 0;
 
 void configuracion(void){
     
@@ -21,6 +22,7 @@ void configuracion(void){
         .bitwidth = ADC_BITWIDTH_12, // Ancho de datos de 12 bits
     };
     adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_0, &channel_config); // Configura el canal 0 del ADC1
+    adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_3, &channel_config); // Configura el canal 3 del ADC1
 }
 
 void app_main(void)
@@ -32,14 +34,20 @@ void app_main(void)
     while (true) // Bucle infinito
     {
         // Lee el valor crudo del canal 0 del ADC1
-        esp_err_t ret = adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &adc_raw);
-        if (ret != ESP_OK) {
+        esp_err_t ret_1 = adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &adc_raw_1);
+        esp_err_t ret_3 = adc_oneshot_read(adc1_handle, ADC_CHANNEL_3, &adc_raw_3);
+        if (ret_1 != ESP_OK) {
             printf("ADC read failed\n");
             continue; // Si la lectura falla, continúa con la siguiente iteración
         }
-        float voltage = adc_raw * (3.3 / 4095); // Convierte el valor ADC a voltaje (asumiendo Vref = 3.3V y resolución de 12 bits)
+        if (ret_3 != ESP_OK) {
+            printf("ADC read failed\n");
+            continue; // Si la lectura falla, continúa con la siguiente iteración
+        }
+        float voltage_1 = adc_raw_1 * (3.3 / 4095); // Convierte el valor ADC a voltaje (asumiendo Vref = 3.3V y resolución de 12 bits)
+        float voltage_3 = adc_raw_3 * (3.3 / 4095); // Convierte el valor ADC a voltaje (asumiendo Vref = 3.3V y resolución de 12 bits)
         // Imprime el valor leído por el ADC
-        printf("ADC Value is %d, Voltage is %.2fV\n", adc_raw, voltage);
+        printf("ADC1: %d, ADC2: %d \t, V1: %.2fV, V2: %0.2f\n", adc_raw_1, adc_raw_3, voltage_1,voltage_3);   
         vTaskDelay(pdMS_TO_TICKS(100)); // Espera 100 ms antes de la siguiente lectura
     }
 }
