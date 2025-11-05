@@ -3,7 +3,7 @@
 
 Programas hechos a base de una tarjeta esp32 
 
-![Texto alternativo de la imagen](C:\Users\poloe\OneDrive\Documentos\Circuitos logicos\imagenes\imagen prueba .jpg)
+![Texto alternativo de la imagen](./img/imagen%20prueba%20.jpg)
 
 ## 01_Blink
 
