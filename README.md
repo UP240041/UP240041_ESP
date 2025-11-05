@@ -3,6 +3,8 @@
 
 Programas hechos a base de una tarjeta esp32 
 
+![Texto alternativo de la imagen](C:\Users\poloe\OneDrive\Documentos\Circuitos logicos\imagenes\imagen prueba)
+
 ## 01_Blink
 
 En este ejercicio realizamos un programa para que la tarjeta realizara una señal SOS al encenderla, dicha señal se podía ver desde los LED's integrados a la tarjeta o por un LED externo a esta
