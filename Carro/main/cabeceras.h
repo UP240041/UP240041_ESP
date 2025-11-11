@@ -1,5 +1,6 @@
 #include <stdio.h> // Incluye la biblioteca estándar de entrada/salida
 #include "freertos/FreeRTOS.h" // Incluye la biblioteca principal de FreeRTOS
+#include "QTR8A.h" //libreria del infrarojo
 
 //Sensor infrarojo
 #define D1 GPIO_NUM_36
@@ -10,6 +11,16 @@
 #define D6 GPIO_NUM_33
 #define D7 GPIO_NUM_25
 #define D8 GPIO_NUM_26
+#define IR GPIO_NUM_23
+
+//Configuracion de constantes y variables globales para el sensor de linea
+#define SENSOR_COUNT 8  //Cantidad de sensores en el QTR8A
+#define CAL_MIN 1023  //Valor minimo de calibración
+#define CAL_MAX 4095  //Valor máximo de calibración
+#define SETPOINT 3500 // depende de la posición ideal
+#define THRESHOLD 300 // Umbral para sensores QTR (si detecta mas de este valor, es línea)
+#define MAX_SPEED 255 // Velocidad máxima del robot (0-255)
+#define UMBRAL_LINEA 980 // Umbral para detectar la línea
 
 //Motor derecho-B
 #define PWMB GPIO_NUM_19
@@ -29,3 +40,4 @@
 #define Yellow GPIO_NUM_27
 #define Green GPIO_NUM_14
 #define Blue GPIO_NUM_2
+#define ISVM GPIO_NUM_12
