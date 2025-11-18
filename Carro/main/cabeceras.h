@@ -1,6 +1,8 @@
 #include <stdio.h> // Incluye la biblioteca estándar de entrada/salida
 #include "freertos/FreeRTOS.h" // Incluye la biblioteca principal de FreeRTOS
 #include "QTR8A.h" //libreria del infrarojo
+#include "driver/ledc.h" // Incluye el controlador para LEDC (PWM)
+
 
 //Sensor infrarojo
 #define D1 GPIO_NUM_36
