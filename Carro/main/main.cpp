@@ -184,7 +184,6 @@ extern "C" void app_main(void)
     configureGpio();
     createSensor();
     setupPWM();
-    control();
     
     void pruebaMotores();
     {
@@ -221,6 +220,9 @@ extern "C" void app_main(void)
         printf("P:%d\n", position);
         vTaskDelay(pdMS_TO_TICKS(100));
     }
+    control();
+    xTaskCreate(control, "control", 2048, NULL, 1, NULL)
+
 
 }
 
