@@ -3,6 +3,21 @@ QTR8A sensor;
 uint16_t sensor_values[SENSOR_COUNT];
 uint16_t position;
 
+//Variables de control
+float KP = 0; //0.8 edicion
+float KD = 0; //12 edicion
+float KI = 0; //0.0 edicion 
+float setpoint = 3500; //Centro de la linea
+float error = 0;
+float error_pasado = 0;
+float derivada = 0;
+float integral = 0;
+float error_ante = 0;
+float ajuste = 0;
+float leftSpeed = 0;
+float rightSpeed = 0;
+float MAX_VEL = 0; //Velocidad maxima de los motores edicion
+
 esp_err_t configureGpio(void)
 {
     // Configure GPIO pins for input and output modes
@@ -96,7 +111,6 @@ esp_err_t calibrateSensor(void)
 
 //void leerlinea(void*pvParam){}
 
-//void control(void*pvParam){}
 
 //void moverse(int speedLeft, int speedRight){}
 
@@ -145,12 +159,32 @@ esp_err_t moveMotors(int16_t leftSpeed, int16_t rightSpeed)
     return ESP_OK;
 }
 
+void control(void*pvParam)
+{
+    while(1)
+    {
+        position = sensor.readLineBlack(sensor_values);
+        error = setpoint - position;  //edicion
+        derivada = error - error_pasado;
+        integral = error + error_pasado + error_ante;
+        ajuste = KP*error + KI*integral + KD*derivada;
+        error_ante = error_pasado;
+        error_pasado = error;
+        leftSpeed = MAX_VEL + ajuste; //edicion
+        rightSpeed = MAX_VEL - ajuste; //edicion
+        moveMotors(leftSpeed, rightSpeed);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    };
+}
+
+
 extern "C" void app_main(void)
 {
     printf("Iniciando programa...\n");
     configureGpio();
     createSensor();
     setupPWM();
+    control();
     
     void pruebaMotores();
     {
