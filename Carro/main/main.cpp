@@ -4,9 +4,9 @@ uint16_t sensor_values[SENSOR_COUNT];
 uint16_t position;
 
 //Variables de control
-float KP = 0; //0.8 edicion
-float KD = 0; //12 edicion
-float KI = 0; //0.0 edicion 
+float KP = 0.05; //0.05 edicion//0.056
+float KD = 0.0001; //12 edicion//0.0038
+float KI = 0.0; //0.0 edicion 
 float setpoint = 3500; //Centro de la linea
 float error = 0;
 float error_pasado = 0;
@@ -16,7 +16,7 @@ float error_ante = 0;
 float ajuste = 0;
 float leftSpeed = 0;
 float rightSpeed = 0;
-float MAX_VEL = 0; //Velocidad maxima de los motores edicion
+float MAX_VEL = 50; //Velocidad maxima de los motores edicion //100
 
 esp_err_t configureGpio(void)
 {
@@ -64,6 +64,21 @@ void setupPWM(void)
     };
     ledc_timer_config(&ledc_timer);
 
+    // Configuración del canal A
+    ledc_channel_config_t ledc_channel_A = {
+        .gpio_num = PWMA, // Primero el GPIO
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .channel = LEDC_CHANNEL_0,
+        .intr_type = LEDC_INTR_DISABLE,
+        .timer_sel = LEDC_TIMER_0,
+        .duty = 0,
+        .hpoint = 0,
+        .sleep_mode = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD, // Deshabilitar el modo de sueño
+        .flags = {
+            .output_invert = 1 // invertir la salida
+        }};
+    ledc_channel_config(&ledc_channel_A);
+
     // Configuración del canal B
     ledc_channel_config_t ledc_channel_B = {
         .gpio_num = PWMB, // Primero el GPIO
@@ -80,6 +95,52 @@ void setupPWM(void)
     ledc_channel_config(&ledc_channel_B);
 
     ledc_fade_func_install(0); // Instala la función de desvanecimiento
+}
+
+esp_err_t moveMotors(int16_t leftSpeed, int16_t rightSpeed)
+{
+    // Left motor
+    if (leftSpeed > 0) {
+        gpio_set_level(AIN1, 0);
+        gpio_set_level(AIN2, 1);
+    } else if (leftSpeed < 0) {
+        gpio_set_level(AIN1, 1);
+        gpio_set_level(AIN2, 0);
+        leftSpeed = -leftSpeed;
+    } else {
+        gpio_set_level(AIN1, 0);
+        gpio_set_level(AIN2, 0);
+    }
+    //TODO: Enviar señal PWM al motor izquierdo
+
+    // Right motor
+    if (rightSpeed > 0) {
+        gpio_set_level(BIN1, 0);
+        gpio_set_level(BIN2, 1);
+    } else if (rightSpeed < 0) {
+        gpio_set_level(BIN1, 1);
+        gpio_set_level(BIN2, 0);
+        rightSpeed = -rightSpeed;
+    } else {
+        gpio_set_level(BIN1, 0);
+        gpio_set_level(BIN2, 0);
+    }
+    //TODO: Enviar señal PWM al motor derecho
+    if (leftSpeed > 255) leftSpeed = 255;
+    if(rightSpeed > 255) rightSpeed = 255;
+    int bloqueo = leftSpeed + rightSpeed;
+    if (bloqueo < 20)
+    {
+        leftSpeed = leftSpeed + MAX_VEL;
+        rightSpeed = rightSpeed + MAX_VEL;
+    } 
+    if(rightSpeed < 25) rightSpeed = 25;
+    if (leftSpeed < 25) leftSpeed = 25;
+
+    ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, leftSpeed , 0);
+    ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, rightSpeed , 0);
+    printf("Left Speed: %d,\t Right Speed: %d\n", leftSpeed, rightSpeed);
+    return ESP_OK;
 }
 
 esp_err_t createSensor(void)
@@ -99,12 +160,20 @@ esp_err_t calibrateSensor(void)
     printf("Calibración iniciada...\n");
     gpio_set_level(Green, 1);
     for (uint16_t i = 0; i < 150; ++i)
-    {
+    {/*
+        if(i < 50)
+            moveMotors(40, -40); //Girar a la izquierda
+        else if(i < 100)
+            moveMotors(-40, 40); //Girar a la derecha
+        else
+            moveMotors(40, -40); //Girar a la izquierda
+        */
         sensor.calibrate();
         printf("%d\n", i);
         vTaskDelay(pdMS_TO_TICKS(10));
     }
     printf("Calibración finalizada\n");
+    moveMotors(0, 0); //Detener motores    
     gpio_set_level(Green, 0);
     return ESP_OK;
 }
@@ -124,54 +193,21 @@ void getMaxMinCal()
     printf("\n");
 }
 
-esp_err_t moveMotors(int16_t leftSpeed, int16_t rightSpeed)
-{
-    // Left motor
-    if (leftSpeed > 0) {
-        gpio_set_level(AIN1, 1);
-        gpio_set_level(AIN2, 0);
-    } else if (leftSpeed < 0) {
-        gpio_set_level(AIN1, 0);
-        gpio_set_level(AIN2, 1);
-        leftSpeed = -leftSpeed;
-    } else {
-        gpio_set_level(AIN1, 0);
-        gpio_set_level(AIN2, 0);
-    }
-    //TODO: Enviar señal PWM al motor izquierdo
-
-    // Right motor
-    if (rightSpeed > 0) {
-        gpio_set_level(BIN1, 1);
-        gpio_set_level(BIN2, 0);
-    } else if (rightSpeed < 0) {
-        gpio_set_level(BIN1, 0);
-        gpio_set_level(BIN2, 1);
-        rightSpeed = -rightSpeed;
-    } else {
-        gpio_set_level(BIN1, 0);
-        gpio_set_level(BIN2, 0);
-    }
-    //TODO: Enviar señal PWM al motor derecho
-    ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, leftSpeed , 0);
-    ledc_set_duty_and_update(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, rightSpeed , 0);
-
-    return ESP_OK;
-}
 
 void control(void*pvParam)
 {
     while(1)
     {
         position = sensor.readLineBlack(sensor_values);
-        error = setpoint - position;  //edicion
+        error = setpoint - position;  //edicion setpoint - position
         derivada = error - error_pasado;
         integral = error + error_pasado + error_ante;
         ajuste = KP*error + KI*integral + KD*derivada;
         error_ante = error_pasado;
         error_pasado = error;
-        leftSpeed = MAX_VEL + ajuste; //edicion
+        leftSpeed = (MAX_VEL + ajuste); //edicion
         rightSpeed = MAX_VEL - ajuste; //edicion
+
         moveMotors(leftSpeed, rightSpeed);
         vTaskDelay(pdMS_TO_TICKS(10));
     };
@@ -184,21 +220,6 @@ extern "C" void app_main(void)
     configureGpio();
     createSensor();
     setupPWM();
-    
-    void pruebaMotores();
-    {
-        printf("Probando motores...\n");
-        moveMotors(200, 200);
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        moveMotors(-200, -200);
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        moveMotors(200, -200);
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        moveMotors(-200, 200);
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        moveMotors(0, 0);
-        printf("Prueba de motores finalizada.\n");
-    }
 
     while(gpio_get_level(Cal) == 1) //Boton sin presionar
     {
@@ -207,22 +228,39 @@ extern "C" void app_main(void)
     calibrateSensor();
     getMaxMinCal();
 
-     while(gpio_get_level(Cal) == 1) //Boton sin presionar
+    /*void pruebaMotores();
+    {
+        printf("Probando motores...\n");
+        gpio_set_level(Yellow, 1);
+        moveMotors(200, 200);       //Recto
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        moveMotors(-200, -200); //reversa
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        moveMotors(200, -200);   //G R
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        moveMotors(-200, 200); // G L
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        moveMotors(0, 0);  //Stop
+        gpio_set_level(Yellow, 0);
+        printf("Prueba de motores finalizada.\n");
+    }*/
+
+    while(gpio_get_level(Ready) == 1) //Boton sin presionar
     {
         vTaskDelay(pdMS_TO_TICKS(10));
     }
     
+    xTaskCreate(control, "control", 2048, NULL, 1, NULL);
+
     while(1)
     {
-        position = sensor.readLineBlack(sensor_values);
+        gpio_set_level(Yellow, 1);
+
         for(int i = 0; i<SENSOR_COUNT; i++)
             printf("%d\t", sensor_values[i]);
         printf("P:%d\n", position);
         vTaskDelay(pdMS_TO_TICKS(100));
     }
-    control();
-    xTaskCreate(control, "control", 2048, NULL, 1, NULL)
-
 
 }
 
